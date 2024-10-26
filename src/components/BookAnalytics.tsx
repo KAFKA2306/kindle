@@ -1,15 +1,21 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Book, BookOpen, DollarSign, Star } from 'lucide-react';
 import { StatCard } from './stats/StatCard';
 import { MonthlyTrends } from './charts/MonthlyTrends';
 import { CategoryDistribution } from './charts/CategoryDistribution';
-import { books } from '@/data/books';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Book as BookType, MonthlyStats, CategoryStats } from '@/types/book';
+import { useQuery } from '@tanstack/react-query';
+import { fetchBookData } from '@/lib/googleSheets';
 
 export const BookAnalytics = () => {
-  const processedData = useMemo(() => {
+  const { data: books = [], isLoading, error } = useQuery({
+    queryKey: ['books'],
+    queryFn: fetchBookData,
+  });
+
+  const processedData = React.useMemo(() => {
     const monthlyStats = books.reduce<Record<string, MonthlyStats>>((acc, book) => {
       const date = new Date(book.注文日);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -36,7 +42,6 @@ export const BookAnalytics = () => {
         acc[monthKey].ratingCount += 1;
       }
       
-      // Calculate averages
       acc[monthKey].avgPrice = acc[monthKey].totalPrice / acc[monthKey].count;
       acc[monthKey].readRatio = acc[monthKey].readCount / acc[monthKey].count;
       acc[monthKey].avgRating = acc[monthKey].ratingCount ? 
@@ -46,9 +51,9 @@ export const BookAnalytics = () => {
     }, {});
 
     return Object.values(monthlyStats);
-  }, []);
+  }, [books]);
 
-  const categoryStats = useMemo(() => {
+  const categoryStats = React.useMemo(() => {
     return Object.values(books.reduce<Record<string, CategoryStats>>((acc, book) => {
       const category = book.メインカテゴリ;
       if (!acc[category]) {
@@ -58,7 +63,7 @@ export const BookAnalytics = () => {
       acc[category].totalPrice += parseFloat(book.価格円?.replace(/,/g, '') || '0');
       return acc;
     }, {}));
-  }, []);
+  }, [books]);
 
   const COLORS = ['#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#6B7280'];
 
@@ -68,6 +73,14 @@ export const BookAnalytics = () => {
     books.filter(book => book.評価).length;
   const totalSpent = books.reduce((acc, book) => 
     acc + parseFloat(book.価格円?.replace(/,/g, '') || '0'), 0);
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500">Error loading data: {error.message}</div>;
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
