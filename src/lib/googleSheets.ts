@@ -1,23 +1,25 @@
-import { google } from '@googleapis/sheets';
+import { sheets_v4 } from '@googleapis/sheets';
 import { MonthlyStats, CategoryStats, Book } from '@/types/book';
 
 const SPREADSHEET_ID = '1D0AQcFWpYuJs-WJWEc07V4uxqcHVP0LuKa2bMeuJ92w';
 const RANGE = 'Sheet1!A2:G'; // Starting from A2 to skip header
 
-const sheets = google.sheets('v4');
-
 export async function fetchBookData(): Promise<Book[]> {
   try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: RANGE,
-      key: import.meta.env.VITE_GOOGLE_API_KEY,
-    });
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${import.meta.env.VITE_GOOGLE_API_KEY}`
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch data from Google Sheets');
+    }
 
-    const rows = response.data.values;
+    const data = await response.json();
+    const rows = data.values;
+    
     if (!rows) return [];
 
-    return rows.map((row): Book => ({
+    return rows.map((row: any[]): Book => ({
       注文日: row[0],
       商品名: row[1],
       読了: Number(row[2]),
