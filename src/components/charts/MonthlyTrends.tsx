@@ -16,9 +16,22 @@ export const MonthlyTrends = ({ data }: MonthlyTrendsProps) => (
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="month" />
-          <YAxis yAxisId="left" />
-          <YAxis yAxisId="right" orientation="right" />
+          <XAxis 
+            dataKey="month"
+            padding={{ left: 30, right: 30 }}
+            tick={{ fontSize: 12 }}
+          />
+          <YAxis 
+            yAxisId="left"
+            tick={{ fontSize: 12 }}
+            width={40}
+          />
+          <YAxis 
+            yAxisId="right" 
+            orientation="right"
+            tick={{ fontSize: 12 }}
+            width={40}
+          />
           <Tooltip />
           <Line 
             yAxisId="left"
@@ -26,6 +39,7 @@ export const MonthlyTrends = ({ data }: MonthlyTrendsProps) => (
             dataKey="count" 
             stroke="#F59E0B" 
             name="購入数"
+            strokeWidth={2}
           />
           <Line 
             yAxisId="right"
@@ -33,6 +47,7 @@ export const MonthlyTrends = ({ data }: MonthlyTrendsProps) => (
             dataKey="readRatio" 
             stroke="#10B981" 
             name="読了率"
+            strokeWidth={2}
           />
         </LineChart>
       </ResponsiveContainer>
