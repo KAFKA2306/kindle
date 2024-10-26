@@ -5,10 +5,12 @@ const SPREADSHEET_ID = '1D0AQcFWpYuJs-WJWEc07V4uxqcHVP0LuKa2bMeuJ92w';
 const RANGE = 'Sheet1!A2:G';
 
 export async function fetchBookData(): Promise<Book[]> {
-  if (!import.meta.env.VITE_GOOGLE_API_KEY) {
+  const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+  
+  if (!apiKey || apiKey === 'your_google_api_key_here') {
     toast({
-      title: "設定エラー",
-      description: "Google Sheets APIキーが設定されていません。",
+      title: "API キーエラー",
+      description: "有効な Google Sheets API キーが設定されていません。.env ファイルを確認してください。",
       variant: "destructive",
     });
     return [];
@@ -16,14 +18,27 @@ export async function fetchBookData(): Promise<Book[]> {
 
   try {
     const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${import.meta.env.VITE_GOOGLE_API_KEY}`
+      `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${apiKey}`
     );
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
     const data = await response.json();
+
+    if (data.error) {
+      if (data.error.status === 'INVALID_ARGUMENT') {
+        toast({
+          title: "API キーエラー",
+          description: "Google Sheets API キーが無効です。有効なAPIキーを設定してください。",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "APIエラー",
+          description: data.error.message || "Google Sheets APIでエラーが発生しました。",
+          variant: "destructive",
+        });
+      }
+      return [];
+    }
     
     if (!data.values) {
       toast({
